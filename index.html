@@ -3,8 +3,8 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport"
-      content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <title>Dart Lions Fan-Wall</title>
 
 <style>
@@ -61,6 +61,11 @@ textarea {
   font: inherit;
 }
 
+input:focus,
+textarea:focus {
+  outline: 1px solid #f0c35a;
+}
+
 textarea {
   min-height: 115px;
   resize: vertical;
@@ -110,6 +115,26 @@ textarea {
   overflow-wrap: anywhere;
 }
 
+#photo-preview {
+  display: none;
+  max-width: 100%;
+  max-height: 220px;
+  margin: 15px auto 0;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+.remove-photo {
+  display: none;
+  margin: 12px auto 0;
+  padding: 8px 14px;
+  background: transparent;
+  border: 1px solid #777777;
+  border-radius: 7px;
+  color: #ffffff;
+  cursor: pointer;
+}
+
 .send-button {
   width: 100%;
   margin-top: 24px;
@@ -141,37 +166,6 @@ textarea {
   font-size: 12px;
   text-align: center;
   line-height: 1.6;
-}
-
-.test-area {
-  margin-top: 25px;
-  padding-top: 20px;
-  border-top: 1px solid #444444;
-  text-align: center;
-}
-
-.test-button {
-  background: #333333;
-  color: #ffffff;
-  border: 1px solid #c69a42;
-  border-radius: 8px;
-  padding: 12px 20px;
-  font-size: 14px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.test-button:disabled {
-  opacity: 0.6;
-  cursor: wait;
-}
-
-#connection-result {
-  margin-top: 12px;
-  color: #f0c35a;
-  font-size: 13px;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
 }
 
 @media (max-width: 600px) {
@@ -213,9 +207,7 @@ textarea {
       required
     >
 
-    <label for="message">
-      Deine Nachricht
-    </label>
+    <label for="message">Deine Nachricht</label>
 
     <textarea
       id="message"
@@ -248,6 +240,19 @@ textarea {
         Kein Foto ausgewählt
       </div>
 
+      <img
+        id="photo-preview"
+        alt="Vorschau des ausgewählten Fotos"
+      >
+
+      <button
+        id="remove-photo"
+        class="remove-photo"
+        type="button"
+      >
+        Foto entfernen
+      </button>
+
       <p class="hint">
         JPG, PNG oder WebP – maximal 5 MB
       </p>
@@ -279,24 +284,6 @@ textarea {
     Veröffentlichung automatisch geprüft.
   </p>
 
-  <div class="test-area">
-
-    <button
-      id="connection-test"
-      class="test-button"
-      type="button"
-    >
-      Verbindung testen
-    </button>
-
-    <p
-      id="connection-result"
-      role="status"
-      aria-live="polite"
-    ></p>
-
-  </div>
-
 </main>
 
 <script>
@@ -305,97 +292,178 @@ textarea {
   const FUNCTION_URL =
     "https://lugyxehsiwzipuczcvzc.supabase.co/functions/v1/bright-endpoint";
 
+  // Bis zum erfolgreichen Test deaktiviert lassen.
   const FANWALL_READY = false;
 
-  const form =
-    document.getElementById("fanwall-form");
+  const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
-  const photo =
-    document.getElementById("photo");
+  const ALLOWED_TYPES = [
+    "image/jpeg",
+    "image/png",
+    "image/webp"
+  ];
 
-  const fileName =
-    document.getElementById("file-name");
+  const form = document.getElementById("fanwall-form");
+  const photo = document.getElementById("photo");
+  const fileName = document.getElementById("file-name");
+  const preview = document.getElementById("photo-preview");
+  const removePhoto = document.getElementById("remove-photo");
+  const sendButton = document.getElementById("send-button");
+  const statusBox = document.getElementById("status");
 
-  const sendButton =
-    document.getElementById("send-button");
-
-  const statusBox =
-    document.getElementById("status");
-
-  const testButton =
-    document.getElementById("connection-test");
-
-  const testResult =
-    document.getElementById("connection-result");
+  let previewUrl = null;
 
   sendButton.disabled = !FANWALL_READY;
 
-  photo.addEventListener("change", function () {
+  function clearPhoto() {
+    photo.value = "";
+    fileName.textContent = "Kein Foto ausgewählt";
 
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      previewUrl = null;
+    }
+
+    preview.removeAttribute("src");
+    preview.style.display = "none";
+    removePhoto.style.display = "none";
+  }
+
+  photo.addEventListener("change", function () {
     const file = photo.files[0];
 
     if (!file) {
-      fileName.textContent = "Kein Foto ausgewählt";
+      clearPhoto();
       return;
     }
 
-    const allowedTypes = [
-      "image/jpeg",
-      "image/png",
-      "image/webp"
-    ];
-
-    if (!allowedTypes.includes(file.type)) {
-      fileName.textContent =
-        "Ungültiges Dateiformat.";
-
-      photo.value = "";
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      clearPhoto();
+      statusBox.textContent =
+        "Nur JPG, PNG und WebP sind erlaubt.";
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      fileName.textContent =
+    if (file.size === 0 || file.size > MAX_IMAGE_BYTES) {
+      clearPhoto();
+      statusBox.textContent =
         "Das Foto darf maximal 5 MB groß sein.";
-
-      photo.value = "";
       return;
     }
 
-    fileName.textContent =
-      "Ausgewählt: " + file.name;
+    statusBox.textContent = "";
+    fileName.textContent = "Ausgewählt: " + file.name;
 
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+
+    previewUrl = URL.createObjectURL(file);
+    preview.src = previewUrl;
+    preview.style.display = "block";
+    removePhoto.style.display = "block";
   });
 
-  form.addEventListener("submit", async function (event) {
+  removePhoto.addEventListener("click", function () {
+    clearPhoto();
+    statusBox.textContent = "";
+  });
 
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = function () {
+        const result = String(reader.result);
+        const commaIndex = result.indexOf(",");
+
+        if (commaIndex === -1) {
+          reject(new Error("Ungültige Bilddaten"));
+          return;
+        }
+
+        resolve(result.substring(commaIndex + 1));
+      };
+
+      reader.onerror = function () {
+        reject(new Error("Foto konnte nicht gelesen werden"));
+      };
+
+      reader.readAsDataURL(file);
+    });
+  }
+
+  form.addEventListener("submit", async function (event) {
     event.preventDefault();
 
     if (!FANWALL_READY) {
+      statusBox.textContent =
+        "Die Fan-Wall ist noch nicht freigeschaltet.";
       return;
     }
 
-    if (photo.files.length > 0) {
+    const name =
+      document.getElementById("name").value.trim();
+
+    const message =
+      document.getElementById("message").value.trim();
+
+    if (
+      name.length < 2 ||
+      name.length > 40 ||
+      message.length < 1 ||
+      message.length > 300
+    ) {
       statusBox.textContent =
-        "Foto-Uploads sind noch nicht freigeschaltet.";
+        "Bitte Namen und Nachricht überprüfen.";
       return;
+    }
+
+    const file = photo.files[0];
+
+    if (file) {
+      if (
+        !ALLOWED_TYPES.includes(file.type) ||
+        file.size === 0 ||
+        file.size > MAX_IMAGE_BYTES
+      ) {
+        statusBox.textContent =
+          "Bitte ein gültiges Foto bis 5 MB auswählen.";
+        return;
+      }
     }
 
     sendButton.disabled = true;
-
-    statusBox.textContent =
-      "Dein Gruß wird geprüft ...";
+    sendButton.textContent = "Wird gesendet ...";
+    statusBox.textContent = "Dein Gruß wird geprüft ...";
 
     try {
+      const payload = {
+        name: name,
+        message: message
+      };
+
+      if (file) {
+        statusBox.textContent =
+          "Foto wird vorbereitet ...";
+
+        const base64 = await fileToBase64(file);
+
+        payload.image = {
+          type: file.type,
+          data: base64
+        };
+
+        statusBox.textContent =
+          "Nachricht und Foto werden geprüft ...";
+      }
 
       const response = await fetch(FUNCTION_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          name: document.getElementById("name").value.trim(),
-          message: document.getElementById("message").value.trim()
-        })
+        body: JSON.stringify(payload)
       });
 
       const result = await response.json();
@@ -408,61 +476,19 @@ textarea {
       }
 
       statusBox.textContent =
+        result.message ||
         "Vielen Dank! Dein Gruß wurde freigegeben.";
 
       form.reset();
-      fileName.textContent = "Kein Foto ausgewählt";
+      clearPhoto();
 
     } catch (error) {
-
       statusBox.textContent =
         "Verbindung fehlgeschlagen. Bitte später erneut versuchen.";
-
     } finally {
-
       sendButton.disabled = !FANWALL_READY;
-
+      sendButton.textContent = "Gruß an die Arena senden";
     }
-
-  });
-
-  testButton.addEventListener("click", async function () {
-
-    testButton.disabled = true;
-
-    testResult.textContent =
-      "Verbindung wird geprüft ...";
-
-    try {
-
-      const response = await fetch(FUNCTION_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          name: "Dart Lions Test",
-          message: "Verbindungstest der Fan-Wall"
-        })
-      });
-
-      const data = await response.json();
-
-      testResult.textContent =
-        "HTTP " + response.status + ": " +
-        (data.error || data.message || "Antwort erhalten");
-
-    } catch (error) {
-
-      testResult.textContent =
-        "Verbindung fehlgeschlagen: " + error.message;
-
-    } finally {
-
-      testButton.disabled = false;
-
-    }
-
   });
 
 })();
