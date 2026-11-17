@@ -3,17 +3,20 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1">
 <title>Dart Lions Fan-Wall</title>
 
 <style>
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 html, body {
   margin: 0;
   padding: 0;
   background: #151515;
-  color: #fff;
+  color: #ffffff;
   font-family: Arial, sans-serif;
 }
 
@@ -36,7 +39,7 @@ h1 {
 
 .intro {
   text-align: center;
-  color: #ddd;
+  color: #dddddd;
   line-height: 1.5;
   margin-bottom: 24px;
 }
@@ -47,12 +50,13 @@ label {
   font-weight: bold;
 }
 
-input[type="text"], textarea {
+input[type="text"],
+textarea {
   width: 100%;
   padding: 13px;
   background: #252525;
-  color: #fff;
-  border: 1px solid #555;
+  color: #ffffff;
+  border: 1px solid #555555;
   border-radius: 8px;
   font: inherit;
 }
@@ -64,7 +68,7 @@ textarea {
 
 .hint {
   font-size: 12px;
-  color: #aaa;
+  color: #aaaaaa;
   margin-top: 8px;
 }
 
@@ -82,20 +86,26 @@ textarea {
   margin-bottom: 15px;
 }
 
-#photo { display: none; }
+#photo {
+  display: none;
+}
 
 .photo-button {
   display: inline-block;
   padding: 12px 20px;
-  background: #333;
-  border: 1px solid #777;
+  background: #333333;
+  border: 1px solid #777777;
   border-radius: 8px;
   cursor: pointer;
 }
 
+.photo-button:hover {
+  background: #444444;
+}
+
 #file-name {
   margin-top: 12px;
-  color: #ddd;
+  color: #dddddd;
   font-size: 13px;
   overflow-wrap: anywhere;
 }
@@ -107,14 +117,14 @@ textarea {
   border: none;
   border-radius: 9px;
   background: #bd2929;
-  color: white;
+  color: #ffffff;
   font-size: 17px;
   font-weight: bold;
   cursor: pointer;
 }
 
 .send-button:disabled {
-  background: #666;
+  background: #666666;
   cursor: not-allowed;
 }
 
@@ -127,10 +137,41 @@ textarea {
 
 .notice {
   margin-top: 18px;
-  color: #bbb;
+  color: #bbbbbb;
   font-size: 12px;
   text-align: center;
   line-height: 1.6;
+}
+
+.test-area {
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px solid #444444;
+  text-align: center;
+}
+
+.test-button {
+  background: #333333;
+  color: #ffffff;
+  border: 1px solid #c69a42;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.test-button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+#connection-result {
+  margin-top: 12px;
+  color: #f0c35a;
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 600px) {
@@ -139,23 +180,30 @@ textarea {
     border-radius: 10px;
   }
 
-  h1 { font-size: 23px; }
+  h1 {
+    font-size: 23px;
+  }
 }
 </style>
 </head>
 
 <body>
+
 <main class="fanwall">
+
   <h1>DART LIONS FAN-WALL</h1>
 
   <p class="intro">
-    Deine Grüße direkt in unsere Live-Arena!<br>
+    Deine Grüße direkt in unsere Live-Arena!
+    <br>
     Schicke uns deine Nachricht und werde Teil
     unserer Live-Show.
   </p>
 
   <form id="fanwall-form">
+
     <label for="name">Dein Name</label>
+
     <input
       id="name"
       type="text"
@@ -165,7 +213,10 @@ textarea {
       required
     >
 
-    <label for="message">Deine Nachricht</label>
+    <label for="message">
+      Deine Nachricht
+    </label>
+
     <textarea
       id="message"
       maxlength="300"
@@ -173,9 +224,12 @@ textarea {
       required
     ></textarea>
 
-    <p class="hint">Maximal 300 Zeichen</p>
+    <p class="hint">
+      Maximal 300 Zeichen
+    </p>
 
     <div class="photo-box">
+
       <div class="photo-title">
         Foto hinzufügen (optional)
       </div>
@@ -197,6 +251,7 @@ textarea {
       <p class="hint">
         JPG, PNG oder WebP – maximal 5 MB
       </p>
+
     </div>
 
     <button
@@ -208,108 +263,210 @@ textarea {
       Gruß an die Arena senden
     </button>
 
-    <div id="status" class="status" role="status"
-         aria-live="polite"></div>
+    <div
+      id="status"
+      class="status"
+      role="status"
+      aria-live="polite"
+    ></div>
+
   </form>
 
-  <p class="notice" id="notice">
-    Die Fan-Wall wird in Kürze freigeschaltet.<br>
+  <p class="notice">
+    Die Fan-Wall wird in Kürze freigeschaltet.
+    <br>
     Nachrichten und Fotos werden vor der
     Veröffentlichung automatisch geprüft.
   </p>
+
+  <div class="test-area">
+
+    <button
+      id="connection-test"
+      class="test-button"
+      type="button"
+    >
+      Verbindung testen
+    </button>
+
+    <p
+      id="connection-result"
+      role="status"
+      aria-live="polite"
+    ></p>
+
+  </div>
+
 </main>
 
 <script>
-const FUNCTION_URL =
-  "https://lugyxehsiwzipuczcvzc.supabase.co/functions/v1/bright-endpoint";
+(function () {
 
-const form = document.getElementById("fanwall-form");
-const photo = document.getElementById("photo");
-const fileName = document.getElementById("file-name");
-const button = document.getElementById("send-button");
-const statusBox = document.getElementById("status");
+  const FUNCTION_URL =
+    "https://lugyxehsiwzipuczcvzc.supabase.co/functions/v1/bright-endpoint";
 
-// Bleibt deaktiviert, bis wir den Server getestet haben.
-const FANWALL_READY = false;
+  const FANWALL_READY = false;
 
-button.disabled = !FANWALL_READY;
+  const form =
+    document.getElementById("fanwall-form");
 
-photo.addEventListener("change", () => {
-  const file = photo.files[0];
+  const photo =
+    document.getElementById("photo");
 
-  if (!file) {
-    fileName.textContent = "Kein Foto ausgewählt";
-    return;
-  }
+  const fileName =
+    document.getElementById("file-name");
 
-  const allowed = [
-    "image/jpeg",
-    "image/png",
-    "image/webp"
-  ];
+  const sendButton =
+    document.getElementById("send-button");
 
-  if (!allowed.includes(file.type)) {
-    fileName.textContent = "Ungültiges Dateiformat.";
-    photo.value = "";
-    return;
-  }
+  const statusBox =
+    document.getElementById("status");
 
-  if (file.size > 5 * 1024 * 1024) {
-    fileName.textContent =
-      "Das Foto darf maximal 5 MB groß sein.";
-    photo.value = "";
-    return;
-  }
+  const testButton =
+    document.getElementById("connection-test");
 
-  fileName.textContent = "Ausgewählt: " + file.name;
-});
+  const testResult =
+    document.getElementById("connection-result");
 
-form.addEventListener("submit", async (event) => {
-  event.preventDefault();
+  sendButton.disabled = !FANWALL_READY;
 
-  if (!FANWALL_READY) return;
+  photo.addEventListener("change", function () {
 
-  if (photo.files.length > 0) {
-    statusBox.textContent =
-      "Foto-Uploads sind noch nicht freigeschaltet.";
-    return;
-  }
+    const file = photo.files[0];
 
-  button.disabled = true;
-  statusBox.textContent = "Dein Gruß wird geprüft ...";
-
-  try {
-    const response = await fetch(FUNCTION_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        name: document.getElementById("name").value.trim(),
-        message: document.getElementById("message").value.trim()
-      })
-    });
-
-    const result = await response.json();
-
-    if (!response.ok || !result.success) {
-      statusBox.textContent =
-        result.error || "Der Gruß konnte nicht gesendet werden.";
+    if (!file) {
+      fileName.textContent = "Kein Foto ausgewählt";
       return;
     }
 
-    statusBox.textContent =
-      "Vielen Dank! Dein Gruß wurde freigegeben.";
-    form.reset();
-    fileName.textContent = "Kein Foto ausgewählt";
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp"
+    ];
 
-  } catch {
+    if (!allowedTypes.includes(file.type)) {
+      fileName.textContent =
+        "Ungültiges Dateiformat.";
+
+      photo.value = "";
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      fileName.textContent =
+        "Das Foto darf maximal 5 MB groß sein.";
+
+      photo.value = "";
+      return;
+    }
+
+    fileName.textContent =
+      "Ausgewählt: " + file.name;
+
+  });
+
+  form.addEventListener("submit", async function (event) {
+
+    event.preventDefault();
+
+    if (!FANWALL_READY) {
+      return;
+    }
+
+    if (photo.files.length > 0) {
+      statusBox.textContent =
+        "Foto-Uploads sind noch nicht freigeschaltet.";
+      return;
+    }
+
+    sendButton.disabled = true;
+
     statusBox.textContent =
-      "Verbindung fehlgeschlagen. Bitte später erneut versuchen.";
-  } finally {
-    button.disabled = !FANWALL_READY;
-  }
-});
+      "Dein Gruß wird geprüft ...";
+
+    try {
+
+      const response = await fetch(FUNCTION_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          name: document.getElementById("name").value.trim(),
+          message: document.getElementById("message").value.trim()
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        statusBox.textContent =
+          result.error ||
+          "Der Gruß konnte nicht gesendet werden.";
+        return;
+      }
+
+      statusBox.textContent =
+        "Vielen Dank! Dein Gruß wurde freigegeben.";
+
+      form.reset();
+      fileName.textContent = "Kein Foto ausgewählt";
+
+    } catch (error) {
+
+      statusBox.textContent =
+        "Verbindung fehlgeschlagen. Bitte später erneut versuchen.";
+
+    } finally {
+
+      sendButton.disabled = !FANWALL_READY;
+
+    }
+
+  });
+
+  testButton.addEventListener("click", async function () {
+
+    testButton.disabled = true;
+
+    testResult.textContent =
+      "Verbindung wird geprüft ...";
+
+    try {
+
+      const response = await fetch(FUNCTION_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          name: "Dart Lions Test",
+          message: "Verbindungstest der Fan-Wall"
+        })
+      });
+
+      const data = await response.json();
+
+      testResult.textContent =
+        "HTTP " + response.status + ": " +
+        (data.error || data.message || "Antwort erhalten");
+
+    } catch (error) {
+
+      testResult.textContent =
+        "Verbindung fehlgeschlagen: " + error.message;
+
+    } finally {
+
+      testButton.disabled = false;
+
+    }
+
+  });
+
+})();
 </script>
+
 </body>
 </html>
