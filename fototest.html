@@ -1,0 +1,180 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dart Lions Fototest</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 24px;
+  background: #151515;
+  color: white;
+  font-family: Arial, sans-serif;
+}
+main {
+  max-width: 550px;
+  margin: 30px auto;
+  padding: 24px;
+  border: 1px solid #c69a42;
+  border-radius: 12px;
+}
+h1 {
+  color: #f0c35a;
+  text-align: center;
+  font-size: 25px;
+}
+label {
+  display: block;
+  margin: 18px 0 8px;
+}
+input, textarea {
+  width: 100%;
+  padding: 12px;
+  background: #252525;
+  border: 1px solid #666;
+  border-radius: 7px;
+  color: white;
+  font: inherit;
+}
+textarea { min-height: 90px; }
+button {
+  width: 100%;
+  margin-top: 24px;
+  padding: 15px;
+  background: #bd2929;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+button:disabled { background: #666; }
+#result {
+  margin-top: 20px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.note { color: #bbb; font-size: 13px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<main>
+  <h1>DART LIONS FOTOTEST</h1>
+  <p class="note">
+    Nur für den internen Test. Die öffentliche
+    Fan-Wall bleibt deaktiviert.
+  </p>
+
+  <form id="test-form">
+    <label for="secret">Geheimer Testcode</label>
+    <input id="secret" type="password"
+           autocomplete="off" required>
+
+    <label for="name">Name</label>
+    <input id="name" type="text"
+           value="Dart Lions Test" required>
+
+    <label for="message">Nachricht</label>
+    <textarea id="message" required>Test des Foto-Uploads</textarea>
+
+    <label for="photo">Testfoto auswählen</label>
+    <input id="photo" type="file"
+           accept="image/jpeg,image/png,image/webp"
+           required>
+
+    <p class="note">
+      JPG, PNG oder WebP – maximal 5 MB.
+      Das Testfoto wird nach dem Hochladen
+      automatisch wieder gelöscht.
+    </p>
+
+    <button id="submit" type="submit">
+      Fototest starten
+    </button>
+
+    <div id="result" role="status"></div>
+  </form>
+</main>
+
+<script>
+const FUNCTION_URL =
+  "https://lugyxehsiwzipuczcvzc.supabase.co/functions/v1/bright-endpoint";
+
+const form = document.getElementById("test-form");
+const button = document.getElementById("submit");
+const resultBox = document.getElementById("result");
+
+function toBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const value = String(reader.result);
+      resolve(value.substring(value.indexOf(",") + 1));
+    };
+
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+form.addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const file = document.getElementById("photo").files[0];
+
+  if (!file) return;
+
+  if (
+    !["image/jpeg", "image/png", "image/webp"].includes(file.type) ||
+    file.size === 0 ||
+    file.size > 5 * 1024 * 1024
+  ) {
+    resultBox.textContent =
+      "Bitte ein gültiges Foto bis 5 MB auswählen.";
+    return;
+  }
+
+  button.disabled = true;
+  resultBox.textContent = "Foto wird geprüft ...";
+
+  try {
+    const base64 = await toBase64(file);
+
+    const response = await fetch(FUNCTION_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        test_mode: true,
+        test_secret: document.getElementById("secret").value,
+        name: document.getElementById("name").value.trim(),
+        message: document.getElementById("message").value.trim(),
+        image: {
+          type: file.type,
+          data: base64
+        }
+      })
+    });
+
+    const data = await response.json();
+
+    resultBox.textContent =
+      "HTTP " + response.status + ": " +
+      (data.message || data.error || "Unbekannte Antwort");
+
+  } catch (error) {
+    resultBox.textContent =
+      "Verbindungsfehler: " + error.message;
+  } finally {
+    document.getElementById("secret").value = "";
+    button.disabled = false;
+  }
+});
+</script>
+</body>
+</html>
