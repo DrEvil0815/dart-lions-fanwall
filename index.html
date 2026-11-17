@@ -2,15 +2,264 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1">
-  <title>Dart Lions Fan-Wall</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dart Lions Fan-Wall</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #151515;
+  color: #fff;
+  font-family: Arial, sans-serif;
+}
+
+.fanwall {
+  width: 100%;
+  max-width: 650px;
+  margin: 0 auto;
+  padding: 24px;
+  border: 1px solid #c69a42;
+  border-radius: 14px;
+  background: #151515;
+}
+
+h1 {
+  margin: 0 0 12px;
+  text-align: center;
+  color: #f0c35a;
+  font-size: 27px;
+}
+
+.intro {
+  text-align: center;
+  color: #ddd;
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+label {
+  display: block;
+  margin: 17px 0 8px;
+  font-weight: bold;
+}
+
+input[type="text"],
+textarea {
+  width: 100%;
+  padding: 13px;
+  background: #252525;
+  color: #fff;
+  border: 1px solid #555;
+  border-radius: 8px;
+  font: inherit;
+}
+
+textarea {
+  min-height: 115px;
+  resize: vertical;
+}
+
+.hint {
+  font-size: 12px;
+  color: #aaa;
+  margin-top: 8px;
+}
+
+.photo-box {
+  margin-top: 20px;
+  padding: 22px;
+  text-align: center;
+  border: 1px dashed #c69a42;
+  border-radius: 10px;
+}
+
+.photo-title {
+  color: #f0c35a;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+#photo {
+  display: none;
+}
+
+.photo-button {
+  display: inline-block;
+  padding: 12px 20px;
+  background: #333;
+  border: 1px solid #777;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.photo-button:hover {
+  background: #444;
+}
+
+#file-name {
+  margin-top: 12px;
+  color: #ddd;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.send-button {
+  width: 100%;
+  margin-top: 24px;
+  padding: 16px;
+  border: none;
+  border-radius: 9px;
+  background: #bd2929;
+  color: white;
+  font-size: 17px;
+  font-weight: bold;
+}
+
+.send-button:disabled {
+  background: #666;
+  cursor: not-allowed;
+}
+
+.notice {
+  margin-top: 18px;
+  color: #bbb;
+  font-size: 12px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+@media (max-width: 600px) {
+  .fanwall {
+    padding: 18px;
+    border-radius: 10px;
+  }
+
+  h1 {
+    font-size: 23px;
+  }
+}
+</style>
 </head>
-<body style="background:#151515;color:#f0c35a;
-             font-family:Arial;text-align:center;
-             padding:40px;">
+
+<body>
+
+<main class="fanwall">
+
   <h1>DART LIONS FAN-WALL</h1>
-  <p>Unsere Fan-Wall wird vorbereitet.</p>
+
+  <p class="intro">
+    Deine Grüße direkt in unsere Live-Arena!<br>
+    Schicke uns deine Nachricht und werde Teil
+    unserer Live-Show.
+  </p>
+
+  <form id="fanwall-form">
+
+    <label for="name">Dein Name</label>
+    <input
+      id="name"
+      type="text"
+      minlength="2"
+      maxlength="40"
+      placeholder="Dein Name"
+      required
+    >
+
+    <label for="message">Deine Nachricht</label>
+    <textarea
+      id="message"
+      maxlength="300"
+      placeholder="Dein Gruß an die Spieler ..."
+      required
+    ></textarea>
+
+    <p class="hint">Maximal 300 Zeichen</p>
+
+    <div class="photo-box">
+
+      <div class="photo-title">
+        Foto hinzufügen (optional)
+      </div>
+
+      <input
+        id="photo"
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+      >
+
+      <label for="photo" class="photo-button">
+        Foto auswählen
+      </label>
+
+      <div id="file-name">
+        Kein Foto ausgewählt
+      </div>
+
+      <p class="hint">
+        JPG, PNG oder WebP – maximal 5 MB
+      </p>
+
+    </div>
+
+    <button class="send-button" type="submit" disabled>
+      Gruß an die Arena senden
+    </button>
+
+  </form>
+
+  <p class="notice">
+    Die Fan-Wall wird in Kürze freigeschaltet.<br>
+    Nachrichten und Fotos werden vor der
+    Veröffentlichung automatisch geprüft.
+  </p>
+
+</main>
+
+<script>
+const photo = document.getElementById("photo");
+const fileName = document.getElementById("file-name");
+
+photo.addEventListener("change", () => {
+  const file = photo.files[0];
+
+  if (!file) {
+    fileName.textContent = "Kein Foto ausgewählt";
+    return;
+  }
+
+  const allowed = [
+    "image/jpeg",
+    "image/png",
+    "image/webp"
+  ];
+
+  if (!allowed.includes(file.type)) {
+    fileName.textContent = "Ungültiges Dateiformat.";
+    photo.value = "";
+    return;
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    fileName.textContent =
+      "Das Foto darf maximal 5 MB groß sein.";
+    photo.value = "";
+    return;
+  }
+
+  fileName.textContent = "Ausgewählt: " + file.name;
+});
+
+document.getElementById("fanwall-form")
+  .addEventListener("submit", (event) => {
+    event.preventDefault();
+  });
+</script>
+
 </body>
 </html>
