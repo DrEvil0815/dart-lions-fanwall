@@ -7,9 +7,7 @@
 <title>Dart Lions Fan-Wall</title>
 
 <style>
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 html, body {
   margin: 0;
@@ -49,8 +47,7 @@ label {
   font-weight: bold;
 }
 
-input[type="text"],
-textarea {
+input[type="text"], textarea {
   width: 100%;
   padding: 13px;
   background: #252525;
@@ -85,9 +82,7 @@ textarea {
   margin-bottom: 15px;
 }
 
-#photo {
-  display: none;
-}
+#photo { display: none; }
 
 .photo-button {
   display: inline-block;
@@ -96,10 +91,6 @@ textarea {
   border: 1px solid #777;
   border-radius: 8px;
   cursor: pointer;
-}
-
-.photo-button:hover {
-  background: #444;
 }
 
 #file-name {
@@ -119,11 +110,19 @@ textarea {
   color: white;
   font-size: 17px;
   font-weight: bold;
+  cursor: pointer;
 }
 
 .send-button:disabled {
   background: #666;
   cursor: not-allowed;
+}
+
+.status {
+  margin-top: 15px;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .notice {
@@ -140,17 +139,13 @@ textarea {
     border-radius: 10px;
   }
 
-  h1 {
-    font-size: 23px;
-  }
+  h1 { font-size: 23px; }
 }
 </style>
 </head>
 
 <body>
-
 <main class="fanwall">
-
   <h1>DART LIONS FAN-WALL</h1>
 
   <p class="intro">
@@ -160,7 +155,6 @@ textarea {
   </p>
 
   <form id="fanwall-form">
-
     <label for="name">Dein Name</label>
     <input
       id="name"
@@ -182,7 +176,6 @@ textarea {
     <p class="hint">Maximal 300 Zeichen</p>
 
     <div class="photo-box">
-
       <div class="photo-title">
         Foto hinzufügen (optional)
       </div>
@@ -204,26 +197,42 @@ textarea {
       <p class="hint">
         JPG, PNG oder WebP – maximal 5 MB
       </p>
-
     </div>
 
-    <button class="send-button" type="submit" disabled>
+    <button
+      id="send-button"
+      class="send-button"
+      type="submit"
+      disabled
+    >
       Gruß an die Arena senden
     </button>
 
+    <div id="status" class="status" role="status"
+         aria-live="polite"></div>
   </form>
 
-  <p class="notice">
+  <p class="notice" id="notice">
     Die Fan-Wall wird in Kürze freigeschaltet.<br>
     Nachrichten und Fotos werden vor der
     Veröffentlichung automatisch geprüft.
   </p>
-
 </main>
 
 <script>
+const FUNCTION_URL =
+  "https://lugyxehsiwzipuczcvzc.supabase.co/functions/v1/bright-endpoint";
+
+const form = document.getElementById("fanwall-form");
 const photo = document.getElementById("photo");
 const fileName = document.getElementById("file-name");
+const button = document.getElementById("send-button");
+const statusBox = document.getElementById("status");
+
+// Bleibt deaktiviert, bis wir den Server getestet haben.
+const FANWALL_READY = false;
+
+button.disabled = !FANWALL_READY;
 
 photo.addEventListener("change", () => {
   const file = photo.files[0];
@@ -255,11 +264,52 @@ photo.addEventListener("change", () => {
   fileName.textContent = "Ausgewählt: " + file.name;
 });
 
-document.getElementById("fanwall-form")
-  .addEventListener("submit", (event) => {
-    event.preventDefault();
-  });
-</script>
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
 
+  if (!FANWALL_READY) return;
+
+  if (photo.files.length > 0) {
+    statusBox.textContent =
+      "Foto-Uploads sind noch nicht freigeschaltet.";
+    return;
+  }
+
+  button.disabled = true;
+  statusBox.textContent = "Dein Gruß wird geprüft ...";
+
+  try {
+    const response = await fetch(FUNCTION_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        name: document.getElementById("name").value.trim(),
+        message: document.getElementById("message").value.trim()
+      })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      statusBox.textContent =
+        result.error || "Der Gruß konnte nicht gesendet werden.";
+      return;
+    }
+
+    statusBox.textContent =
+      "Vielen Dank! Dein Gruß wurde freigegeben.";
+    form.reset();
+    fileName.textContent = "Kein Foto ausgewählt";
+
+  } catch {
+    statusBox.textContent =
+      "Verbindung fehlgeschlagen. Bitte später erneut versuchen.";
+  } finally {
+    button.disabled = !FANWALL_READY;
+  }
+});
+</script>
 </body>
 </html>
